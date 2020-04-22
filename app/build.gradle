@@ -53,4 +53,5 @@ dependencies {
 
     // 添加uni-app插件
     implementation project(':uniplugin_richalert')
+    implementation project(':uniplugin_readcard')
 }

@@ -7,6 +7,11 @@
           "type": "module",
           "name": "DCloud-RichAlert",
           "class": "uni.dcloud.io.uniplugin_richalert.RichAlertWXModule"
+        },
+        {
+          "type": "module",
+          "name": "IIRun-ReadCard",
+          "class": "com.example.uniplugin_readcard.MainRead"
         }
       ]
     },
