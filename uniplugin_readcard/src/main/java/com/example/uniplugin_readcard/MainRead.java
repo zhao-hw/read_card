@@ -1,28 +1,24 @@
 package com.example.uniplugin_readcard;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.alibaba.fastjson.JSONObject;
+import com.iirun.myd.common.ResultVOUtil;
 import com.taobao.weex.WXSDKEngine;
 import com.taobao.weex.annotation.JSMethod;
+import com.taobao.weex.bridge.JSCallback;
 
 import java.util.Arrays;
 
 import cn.wmr.CWMR;
 
 public class MainRead extends WXSDKEngine.DestroyableModule {
-
     public CWMR wmr = new CWMR();
-
     int rt = 0;
-
     int port = 0;
-
     String str = "FFFFFFFFFFFF";
-
     int block = 5;
-
     byte[] bdata=new byte[1024];
     byte[] hdata=new byte[1024];
     boolean openUSBHID = false;
@@ -31,63 +27,81 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
 
 
     @JSMethod(uiThread = true)
-    public void test() {
-        Context context = mWXSDKInstance.getContext();
-        Toast.makeText(context, "===>start!", Toast.LENGTH_SHORT).show();
+    public void test(JSCallback jsCallback) {
+        if (openUSBHID && readCardType && loadPassword) {
+            String s = on_button_readblock_clicked();
+            if (s != null && s != "") {
+                wmr.ws_beep(port);
+                jsCallback.invoke(ResultVOUtil.success(s));
+            } else {
+                beforeWork();
+            }
+        } else {
+            StringBuilder sb = new StringBuilder();
+            if (!openUSBHID) {
+                sb.append("没有打开USB连接，断开无关usb设备后重试\n");
+            }
+            if (!readCardType) {
+                sb.append("获取卡类型失败\n");
+            }
+            if (!loadPassword) {
+                sb.append("加载密码失败\n");
+            }
+            jsCallback.invoke(ResultVOUtil.error(-1, sb.toString()));
+        }
     }
 
     @JSMethod(uiThread = true)
-    public void on_button_port_clicked() {
+    public void on_button_port_clicked(JSCallback jsCallback) {
+        JSONObject result = new JSONObject();
         Context context = mWXSDKInstance.getContext();
-        Toast.makeText(context, "===>start!", Toast.LENGTH_SHORT).show();
         wmr.ws_set_context(context);
-        rt = wmr.ws_openPort(port);
-        if (rt >= 0) {
-            openUSBHID = true;
-            Toast.makeText(context, "打开成功", Toast.LENGTH_SHORT).show();
-            beforeWork();
-        } else {
-            openUSBHID = false;
-            Toast.makeText(context, String.format("USB-HID端口 %d 打开失败.(返回值：%d),请重试", port, rt), Toast.LENGTH_SHORT).show();
+        if (!openUSBHID) {
+            rt = wmr.ws_openPort(port);
+            if (rt >= 0) {
+                openUSBHID = true;
+                boolean b = beforeWork();
+                if (b) {
+                    String s = on_button_readblock_clicked();
+                    result = ResultVOUtil.success();
+                }
+            } else {
+                openUSBHID = false;
+                result = ResultVOUtil.error(-1, String.format("USB-HID端口 %d 打开失败.(返回值：%d),请重试", port, rt));
+            }
         }
-//        wmr.ws_set_context(context);
-//        wmr.ws_openPort(port);
-//        byte[] hkey = str.getBytes();
-//        byte[] bkey = new byte[100];
-//        wmr.ws_strHexToChar(hkey, str.length(), bkey);
-//        rt = wmr.ws_loadKey(0, bkey, 1);
-//        get_cardno_iso14443a();
-//        on_button_readblock_clicked();
+//        else {
+//            Toast.makeText(context, "打开成功", Toast.LENGTH_SHORT).show();
+//            boolean b = beforeWork();
+//            if (b) {
+//                String s = on_button_readblock_clicked();
+//                Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
+//                result = ResultVOUtil.error(1, s);
+//            } else {
+//                result = ResultVOUtil.error(-1, "加载密码或者卡号失败");
+//            }
+//        }
+        jsCallback.invoke(result);
     }
 
     public boolean beforeWork() {
         Context context = mWXSDKInstance.getContext();
-        Toast.makeText(context, "正在打开", Toast.LENGTH_SHORT).show();
         byte[] hkey = str.getBytes();
         byte[] bkey = new byte[100];
-
-
-
-        while (!loadPassword || !readCardType) {
-            wmr.ws_strHexToChar(hkey, str.length(), bkey);
-            rt = wmr.ws_loadKey(0, bkey, 1);
-            if (rt > 0) {
-                loadPassword = true;
-                Toast.makeText(context, "装载密码成功", Toast.LENGTH_SHORT).show();
-            } else {
-                loadPassword = false;
-                Toast.makeText(context, "装载密码失败", Toast.LENGTH_SHORT).show();
-            }
-
-            String cardno_iso14443a = get_cardno_iso14443a();
-            if (cardno_iso14443a != null) {
-                readCardType = true;
-                Toast.makeText(context, cardno_iso14443a, Toast.LENGTH_SHORT).show();
-            } else {
-                readCardType = false;
-            }
+        wmr.ws_strHexToChar(hkey, str.length(), bkey);
+        rt = wmr.ws_loadKey(0, bkey, 1);
+        if (rt > 0) {
+            loadPassword = true;
+        } else {
+            loadPassword = false;
         }
-        rt = wmr.ws_beep(port);
+
+        String cardno_iso14443a = get_cardno_iso14443a();
+        if (cardno_iso14443a != null) {
+            readCardType = true;
+        } else {
+            readCardType = false;
+        }
         return true;
     }
 
@@ -122,7 +136,7 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
     }
 
     //读块数据
-    public void on_button_readblock_clicked(){
+    public String on_button_readblock_clicked(){
 
         int i;
         Arrays.fill(bdata, (byte)0);
@@ -137,9 +151,9 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
 //            wmr.ws_charToStrHex(bdata, 16, hdata);
             stringBuilder.append(toUpperCase(bdata,32), 0, 32);
             stringBuilder.append("\n");
-
-        }
-        else{
+            return stringBuilder.toString();
+        } else {
+            return "";
         }
 
     }
