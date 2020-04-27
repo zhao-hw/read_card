@@ -41,6 +41,7 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
             if (!openUSBHID) {
                 sb.append("没有打开USB连接，断开无关usb设备后重试\n");
             }
+            beforeWork();
             if (!readCardType) {
                 sb.append("获取卡类型失败\n");
             }
@@ -49,6 +50,11 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
             }
             jsCallback.invoke(ResultVOUtil.error(-1, sb.toString()));
         }
+    }
+
+    @JSMethod(uiThread = true)
+    public void closePort(){
+        wmr.ws_closePort(port);
     }
 
     @JSMethod(uiThread = true)
@@ -70,7 +76,7 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
                 result = ResultVOUtil.error(-1, String.format("USB-HID端口 %d 打开失败.(返回值：%d),请重试", port, rt));
             }
         }
-//        else {
+        else {
 //            Toast.makeText(context, "打开成功", Toast.LENGTH_SHORT).show();
 //            boolean b = beforeWork();
 //            if (b) {
@@ -80,7 +86,9 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
 //            } else {
 //                result = ResultVOUtil.error(-1, "加载密码或者卡号失败");
 //            }
-//        }
+//            beforeWork();
+            result = ResultVOUtil.success();
+        }
         jsCallback.invoke(result);
     }
 
