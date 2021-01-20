@@ -8,8 +8,8 @@ android {
         minSdkVersion 19
         targetSdkVersion 28 //建议此属性值设为21 io.dcloud.PandoraEntry 作为apk入口时   必须设置 targetSDKVersion>=21 沉浸式才生效
 
-        versionCode 1
-        versionName "1.0"
+        versionCode 5
+        versionName "1.5"
         multiDexEnabled true
         ndk {
             abiFilters 'x86','armeabi-v7a'
@@ -52,6 +52,6 @@ dependencies {
     implementation 'com.alibaba:fastjson:1.1.46.android'
 
     // 添加uni-app插件
-    implementation project(':uniplugin_richalert')
+//    implementation project(':uniplugin_richalert')
     implementation project(':uniplugin_readcard')
 }

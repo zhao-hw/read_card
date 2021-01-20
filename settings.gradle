@@ -1,2 +1,2 @@
-include ':app', ':uniplugin_richalert'
+include ':app'
 include ':uniplugin_readcard'

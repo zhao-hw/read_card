@@ -1,7 +1,6 @@
 package com.example.uniplugin_readcard;
 
 import android.content.Context;
-import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONObject;
 import com.iirun.myd.common.ResultVOUtil;
@@ -49,6 +48,17 @@ public class MainRead extends WXSDKEngine.DestroyableModule {
                 sb.append("加载密码失败\n");
             }
             jsCallback.invoke(ResultVOUtil.error(-1, sb.toString()));
+        }
+    }
+
+    @JSMethod(uiThread = true)
+    public void getScanGunRes(JSCallback jsCallback) {
+        String s = ScanService.mStringBufferResult.toString();
+        ScanService.mStringBufferResult.setLength(0);
+        if (s != null && !"".equals(s)) {
+            jsCallback.invoke(ResultVOUtil.success(s));
+        } else {
+            jsCallback.invoke(ResultVOUtil.error(-1, ""));
         }
     }
 
